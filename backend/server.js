@@ -4,12 +4,14 @@
 const express = require('express');
 const cors = require('cors');
 const db = require('./config/db');
+const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 
 // Middleware: lets our server accept JSON data and allow the frontend to talk to it
 app.use(cors());
 app.use(express.json());
+app.use('/api/auth', authRoutes);
 
 // A simple test route
 app.get('/', (req, res) => {
