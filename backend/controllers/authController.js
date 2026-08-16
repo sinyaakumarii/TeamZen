@@ -1,11 +1,8 @@
 // controllers/authController.js
-// This file handles registration and login logic.
-
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 
-// REGISTER: creates a new user with a securely hashed password
 const register = async (req, res) => {
   try {
     const { full_name, email, password, role, organization_id } = req.body;
@@ -39,7 +36,6 @@ const register = async (req, res) => {
   }
 };
 
-// LOGIN: checks email/password, returns a JWT token if correct
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -48,7 +44,6 @@ const login = async (req, res) => {
       return res.status(400).json({ status: 'error', message: 'email and password are required' });
     }
 
-    // Find the user by email
     const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
     if (users.length === 0) {
       return res.status(401).json({ status: 'error', message: 'Invalid email or password' });
@@ -56,18 +51,15 @@ const login = async (req, res) => {
 
     const user = users[0];
 
-    // Compare the given password with the stored hash
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
       return res.status(401).json({ status: 'error', message: 'Invalid email or password' });
     }
 
-    // Check if the account is active
     if (user.status !== 'active') {
       return res.status(403).json({ status: 'error', message: 'This account is inactive. Contact your admin.' });
     }
 
-    // Create a JWT token containing the user's id, role, and organization
     const token = jwt.sign(
       { userId: user.id, role: user.role, organizationId: user.organization_id },
       process.env.JWT_SECRET,
