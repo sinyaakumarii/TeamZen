@@ -4,6 +4,7 @@ const cors = require('cors');
 const db = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const organizationRoutes = require('./routes/organizationRoutes');
+const officeSettingsRoutes = require('./routes/officeSettingsRoutes');
 
 const app = express();
 
@@ -12,6 +13,7 @@ app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/organizations', organizationRoutes);
+app.use('/api/office-settings', officeSettingsRoutes);
 
 app.get('/', (req, res) => {
   res.send('TeamZen backend is running!');
