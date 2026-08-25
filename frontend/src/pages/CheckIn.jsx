@@ -3,6 +3,10 @@ import { useEffect, useRef, useState } from 'react';
 import * as faceapi from 'face-api.js';
 import api from '../services/api';
 import { Link } from 'react-router-dom';
+import {
+  ArrowLeft, LogIn, LogOut, CheckCircle2, AlertCircle,
+  MapPin, Clock, ScanFace, Timer
+} from 'lucide-react';
 
 function CheckIn() {
   const videoRef = useRef(null);
@@ -28,7 +32,7 @@ function CheckIn() {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
-        setStatus('Position your face in the frame and click "Check In".');
+        setStatus('Center your face in the frame, then check in.');
       } catch (err) {
         setError('Could not access camera or load models. Please allow camera permission and refresh.');
         console.error(err);
@@ -89,12 +93,12 @@ function CheckIn() {
       });
 
       setResult(response.data.data);
-      setStatus('✅ Checked in successfully!');
+      setStatus('Checked in successfully!');
 
     } catch (err) {
       const message = err.response?.data?.message || err.message || 'Check-in failed. Please try again.';
       setError(message);
-      setStatus('Position your face in the frame and click "Check In".');
+      setStatus('Center your face in the frame, then check in.');
     } finally {
       setProcessing(false);
     }
@@ -120,66 +124,76 @@ function CheckIn() {
     <div className="dash-shell">
       <div className="dash-topbar">
         <div className="dash-wordmark">TeamZen</div>
-        <Link to="/" style={{ color: 'white', fontSize: '13px', textDecoration: 'none' }}>← Back to Dashboard</Link>
+        <Link to="/" className="back-link"><ArrowLeft size={15} /> Back to Dashboard</Link>
       </div>
 
       <div className="dash-content" style={{ textAlign: 'center' }}>
+        <div className="icon-circle teal" style={{ margin: '0 auto 14px' }}>
+          <ScanFace size={20} />
+        </div>
         <h2 className="form-title">Mark Attendance</h2>
         <p className="form-subtitle">{status}</p>
 
-        {error && <div className="error-box" style={{ maxWidth: '420px', margin: '0 auto 20px' }}>{error}</div>}
-
-        {result && (
-          <div style={{ background: '#E8F5E9', color: '#2E7D32', padding: '16px', borderRadius: '10px', maxWidth: '420px', margin: '0 auto 20px', textAlign: 'left' }}>
-            <strong>Check-in confirmed!</strong>
-            <p style={{ margin: '6px 0 0', fontSize: '13px' }}>
-              Status: {result.lateStatus} ({result.lateMinutes} min)<br />
-              Distance from office: {result.distanceMeters}m<br />
-              Face match confidence: {(1 - result.faceMatchDistance).toFixed(2)}
-            </p>
+        {error && (
+          <div className="error-box" style={{ maxWidth: '420px', margin: '0 auto 20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <AlertCircle size={16} /> {error}
           </div>
         )}
 
-        <video
-          ref={videoRef}
-          autoPlay
-          muted
-          width="400"
-          height="300"
-          style={{ borderRadius: '12px', border: '2px solid var(--teal-500)', background: '#000' }}
-        />
+        {result && (
+          <div className="result-box success">
+            <div className="result-box-title">
+              <CheckCircle2 size={18} color="#2E7D32" /> Check-in confirmed
+            </div>
+            <div className="result-row"><span><Clock size={13} style={{ verticalAlign: '-2px' }} /> Status</span><span>{result.lateStatus.replace('_', ' ')} ({result.lateMinutes} min)</span></div>
+            <div className="result-row"><span><MapPin size={13} style={{ verticalAlign: '-2px' }} /> Distance</span><span>{result.distanceMeters}m from office</span></div>
+            <div className="result-row"><span><ScanFace size={13} style={{ verticalAlign: '-2px' }} /> Face match</span><span>{(1 - result.faceMatchDistance).toFixed(2)} confidence</span></div>
+          </div>
+        )}
 
-        <br />
+        <div className="camera-wrap">
+          <video ref={videoRef} autoPlay muted className="camera-video" />
+          <div className="camera-guide" />
+          {modelsLoaded && (
+            <div className="camera-badge">
+              <span className="pulse-dot" /> Live
+            </div>
+          )}
+        </div>
 
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '20px', flexWrap: 'wrap' }}>
+        <div className="btn-row">
           <button
-            className="btn-primary"
-            style={{ maxWidth: '200px' }}
+            className="btn-primary btn-with-icon"
+            style={{ maxWidth: '180px' }}
             onClick={handleCheckIn}
             disabled={!modelsLoaded || processing}
           >
-            {processing ? 'Processing...' : 'Check In'}
+            <LogIn size={16} /> {processing ? 'Processing...' : 'Check In'}
           </button>
 
           <button
-            className="btn-primary"
-            style={{ maxWidth: '200px', background: 'var(--amber-600)' }}
+            className="btn-secondary"
+            style={{ maxWidth: '180px' }}
             onClick={handleCheckOut}
             disabled={checkingOut}
           >
-            {checkingOut ? 'Processing...' : 'Check Out'}
+            <LogOut size={16} /> {checkingOut ? 'Processing...' : 'Check Out'}
           </button>
         </div>
 
-        {checkOutError && <div className="error-box" style={{ maxWidth: '420px', margin: '20px auto 0' }}>{checkOutError}</div>}
+        {checkOutError && (
+          <div className="error-box" style={{ maxWidth: '420px', margin: '20px auto 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <AlertCircle size={16} /> {checkOutError}
+          </div>
+        )}
 
         {checkOutResult && (
-          <div style={{ background: '#FFF3E0', color: '#E65100', padding: '16px', borderRadius: '10px', maxWidth: '420px', margin: '20px auto 0', textAlign: 'left' }}>
-            <strong>Check-out confirmed!</strong>
-            <p style={{ margin: '6px 0 0', fontSize: '13px' }}>
-              Working hours: {checkOutResult.workingHours}h<br />
-              Overtime: {checkOutResult.overtimeHours}h
-            </p>
+          <div className="result-box warning" style={{ marginTop: '20px' }}>
+            <div className="result-box-title" style={{ color: '#E65100' }}>
+              <Timer size={18} /> Check-out confirmed
+            </div>
+            <div className="result-row"><span>Working hours</span><span>{checkOutResult.workingHours}h</span></div>
+            <div className="result-row"><span>Overtime</span><span>{checkOutResult.overtimeHours}h</span></div>
           </div>
         )}
       </div>
