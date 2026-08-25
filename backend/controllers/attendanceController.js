@@ -1,7 +1,7 @@
 // controllers/attendanceController.js
 const db = require('../config/db');
 const { isWithinOfficeRadius } = require('../utils/locationUtils');
-const { getPakistanTimeNow, getDayOfWeek, getDateString, calculateLateStatus } = require('../utils/timeUtils');
+const { getPakistanTimeNow, getDayOfWeek, getDateString, calculateLateStatus, calculateWorkingHours } = require('../utils/timeUtils');
 const { getClientIp } = require('../utils/networkUtils');
 const { isFaceMatch } = require('../utils/faceUtils');
 
@@ -146,5 +146,55 @@ const checkIn = async (req, res) => {
     res.status(500).json({ status: 'error', message: 'Check-in failed', error: error.message });
   }
 };
+const checkOut = async (req, res) => {
+  try {
+    const userId = req.user.userId;
 
-module.exports = { checkIn, getMyIp };
+    // Find the employee profile
+    const [employees] = await db.query('SELECT id FROM employees WHERE user_id = ?', [userId]);
+    if (employees.length === 0) {
+      return res.status(404).json({ status: 'error', message: 'No employee profile found for your account.' });
+    }
+    const employeeId = employees[0].id;
+
+    const nowPKT = getPakistanTimeNow();
+    const attendanceDate = getDateString(nowPKT);
+
+    // Find today's attendance record
+    const [existing] = await db.query(
+      'SELECT id, check_in_time, check_out_time FROM attendance WHERE employee_id = ? AND attendance_date = ?',
+      [employeeId, attendanceDate]
+    );
+
+    if (existing.length === 0 || !existing[0].check_in_time) {
+      return res.status(400).json({ status: 'error', message: 'You have not checked in today. Cannot check out.' });
+    }
+
+    if (existing[0].check_out_time) {
+      return res.status(409).json({ status: 'error', message: 'You have already checked out today.' });
+    }
+
+    const checkInTime = new Date(existing[0].check_in_time);
+    const { workingHours, overtimeHours } = calculateWorkingHours(checkInTime, nowPKT);
+
+    await db.query(
+      'UPDATE attendance SET check_out_time = ?, working_hours = ?, overtime_hours = ? WHERE id = ?',
+      [nowPKT, workingHours, overtimeHours, existing[0].id]
+    );
+
+    res.json({
+      status: 'ok',
+      message: 'Check-out successful!',
+      data: {
+        checkOutTime: nowPKT,
+        workingHours,
+        overtimeHours
+      }
+    });
+
+  } catch (error) {
+    console.error('Check-out error:', error);
+    res.status(500).json({ status: 'error', message: 'Check-out failed', error: error.message });
+  }
+};
+module.exports = { checkIn, getMyIp, checkOut };
