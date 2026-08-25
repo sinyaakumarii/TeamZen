@@ -2,12 +2,20 @@
 const db = require('../config/db');
 const { isWithinOfficeRadius } = require('../utils/locationUtils');
 const { getPakistanTimeNow, getDayOfWeek, getDateString, calculateLateStatus } = require('../utils/timeUtils');
+const { getClientIp } = require('../utils/networkUtils');
+
+// Utility endpoint: lets a user see their own current IP (for Admin to configure office_settings.allowed_ip)
+const getMyIp = (req, res) => {
+  const ip = getClientIp(req);
+  res.json({ status: 'ok', yourIp: ip });
+};
 
 const checkIn = async (req, res) => {
   try {
     const { latitude, longitude } = req.body;
     const userId = req.user.userId;
     const organizationId = req.user.organizationId;
+    const clientIp = getClientIp(req);
 
     if (latitude === undefined || longitude === undefined) {
       return res.status(400).json({ status: 'error', message: 'GPS latitude and longitude are required. Please enable location access.' });
@@ -20,14 +28,26 @@ const checkIn = async (req, res) => {
     }
     const employeeId = employees[0].id;
 
-    // Step 2: Get office settings for GPS radius and late thresholds
+    // Step 2: Get office settings for GPS radius, allowed IP, and late thresholds
     const [settingsRows] = await db.query('SELECT * FROM office_settings WHERE organization_id = ?', [organizationId]);
     if (settingsRows.length === 0) {
       return res.status(400).json({ status: 'error', message: 'Office location has not been configured yet. Contact your Admin.' });
     }
     const settings = settingsRows[0];
 
-    // Step 3: CHECK 1 — GPS verification
+    // Step 3: CHECK 1 — Network verification (IP-based, honest substitute for Wi-Fi SSID)
+    // Only enforced if the Admin has actually configured an allowed_ip.
+    if (settings.allowed_ip) {
+      if (clientIp !== settings.allowed_ip) {
+        return res.status(403).json({
+          status: 'error',
+          message: `Network verification failed. You must be connected to the office network to check in.`,
+          check: 'network'
+        });
+      }
+    }
+
+    // Step 4: CHECK 2 — GPS verification
     const { isWithinRadius, distanceMeters } = isWithinOfficeRadius(
       parseFloat(settings.office_latitude),
       parseFloat(settings.office_longitude),
@@ -45,12 +65,12 @@ const checkIn = async (req, res) => {
       });
     }
 
-    // Step 4: CHECK 2 — server-side Pakistan time
+    // Step 5: CHECK 3 — server-side Pakistan time
     const nowPKT = getPakistanTimeNow();
     const attendanceDate = getDateString(nowPKT);
     const dayOfWeek = getDayOfWeek(nowPKT);
 
-    // Step 5: Prevent duplicate check-in for the same day
+    // Step 6: Prevent duplicate check-in for the same day
     const [existing] = await db.query(
       'SELECT id, check_in_time FROM attendance WHERE employee_id = ? AND attendance_date = ?',
       [employeeId, attendanceDate]
@@ -59,7 +79,7 @@ const checkIn = async (req, res) => {
       return res.status(409).json({ status: 'error', message: 'You have already checked in today.' });
     }
 
-    // Step 6: Calculate late status based on office standard start time
+    // Step 7: Calculate late status based on office standard start time
     const { lateMinutes, lateStatus } = calculateLateStatus(
       nowPKT,
       settings.standard_start_time,
@@ -70,22 +90,21 @@ const checkIn = async (req, res) => {
       }
     );
 
-    // Step 7: Save the attendance record
+    // Step 8: Save the attendance record (now including IP address for the audit log)
     if (existing.length > 0) {
-      // A row for today exists but check-in wasn't set yet (edge case) — update it
       await db.query(
         `UPDATE attendance SET
           check_in_time = ?, day_of_week = ?, check_in_latitude = ?, check_in_longitude = ?,
-          late_status = ?, late_minutes = ?, verification_status = 'verified'
+          check_in_ip = ?, late_status = ?, late_minutes = ?, verification_status = 'verified'
         WHERE id = ?`,
-        [nowPKT, dayOfWeek, latitude, longitude, lateStatus, lateMinutes, existing[0].id]
+        [nowPKT, dayOfWeek, latitude, longitude, clientIp, lateStatus, lateMinutes, existing[0].id]
       );
     } else {
       await db.query(
         `INSERT INTO attendance
-          (employee_id, attendance_date, day_of_week, check_in_time, check_in_latitude, check_in_longitude, late_status, late_minutes, verification_status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'verified')`,
-        [employeeId, attendanceDate, dayOfWeek, nowPKT, latitude, longitude, lateStatus, lateMinutes]
+          (employee_id, attendance_date, day_of_week, check_in_time, check_in_latitude, check_in_longitude, check_in_ip, late_status, late_minutes, verification_status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'verified')`,
+        [employeeId, attendanceDate, dayOfWeek, nowPKT, latitude, longitude, clientIp, lateStatus, lateMinutes]
       );
     }
 
@@ -106,4 +125,4 @@ const checkIn = async (req, res) => {
   }
 };
 
-module.exports = { checkIn };
+module.exports = { checkIn, getMyIp };
