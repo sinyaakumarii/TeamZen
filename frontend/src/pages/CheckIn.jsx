@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import * as faceapi from 'face-api.js';
 import api from '../services/api';
+import { Link } from 'react-router-dom';
 
 function CheckIn() {
   const videoRef = useRef(null);
@@ -10,6 +11,9 @@ function CheckIn() {
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
   const [processing, setProcessing] = useState(false);
+  const [checkOutResult, setCheckOutResult] = useState(null);
+  const [checkOutError, setCheckOutError] = useState('');
+  const [checkingOut, setCheckingOut] = useState(false);
 
   useEffect(() => {
     const setup = async () => {
@@ -60,7 +64,6 @@ function CheckIn() {
     setProcessing(true);
 
     try {
-      // Step 1: Get face descriptor
       setStatus('Detecting face...');
       const detection = await faceapi
         .detectSingleFace(videoRef.current, new faceapi.TinyFaceDetectorOptions())
@@ -75,11 +78,9 @@ function CheckIn() {
 
       const faceDescriptor = Array.from(detection.descriptor);
 
-      // Step 2: Get GPS location
       setStatus('Getting your location...');
       const { latitude, longitude } = await getLocation();
 
-      // Step 3: Send to backend
       setStatus('Verifying and checking in...');
       const response = await api.post('/attendance/check-in', {
         latitude,
@@ -99,10 +100,27 @@ function CheckIn() {
     }
   };
 
+  const handleCheckOut = async () => {
+    setCheckOutError('');
+    setCheckOutResult(null);
+    setCheckingOut(true);
+
+    try {
+      const response = await api.post('/attendance/check-out');
+      setCheckOutResult(response.data.data);
+    } catch (err) {
+      const message = err.response?.data?.message || 'Check-out failed. Please try again.';
+      setCheckOutError(message);
+    } finally {
+      setCheckingOut(false);
+    }
+  };
+
   return (
     <div className="dash-shell">
       <div className="dash-topbar">
         <div className="dash-wordmark">TeamZen</div>
+        <Link to="/" style={{ color: 'white', fontSize: '13px', textDecoration: 'none' }}>← Back to Dashboard</Link>
       </div>
 
       <div className="dash-content" style={{ textAlign: 'center' }}>
@@ -133,14 +151,37 @@ function CheckIn() {
 
         <br />
 
-        <button
-          className="btn-primary"
-          style={{ maxWidth: '250px', marginTop: '20px' }}
-          onClick={handleCheckIn}
-          disabled={!modelsLoaded || processing}
-        >
-          {processing ? 'Processing...' : 'Check In'}
-        </button>
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '20px', flexWrap: 'wrap' }}>
+          <button
+            className="btn-primary"
+            style={{ maxWidth: '200px' }}
+            onClick={handleCheckIn}
+            disabled={!modelsLoaded || processing}
+          >
+            {processing ? 'Processing...' : 'Check In'}
+          </button>
+
+          <button
+            className="btn-primary"
+            style={{ maxWidth: '200px', background: 'var(--amber-600)' }}
+            onClick={handleCheckOut}
+            disabled={checkingOut}
+          >
+            {checkingOut ? 'Processing...' : 'Check Out'}
+          </button>
+        </div>
+
+        {checkOutError && <div className="error-box" style={{ maxWidth: '420px', margin: '20px auto 0' }}>{checkOutError}</div>}
+
+        {checkOutResult && (
+          <div style={{ background: '#FFF3E0', color: '#E65100', padding: '16px', borderRadius: '10px', maxWidth: '420px', margin: '20px auto 0', textAlign: 'left' }}>
+            <strong>Check-out confirmed!</strong>
+            <p style={{ margin: '6px 0 0', fontSize: '13px' }}>
+              Working hours: {checkOutResult.workingHours}h<br />
+              Overtime: {checkOutResult.overtimeHours}h
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

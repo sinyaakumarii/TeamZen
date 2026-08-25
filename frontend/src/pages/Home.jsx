@@ -1,9 +1,30 @@
 // pages/Home.jsx
+import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
+import api from '../services/api';
 
 function Home() {
   const { user, logout } = useAuth();
+  const [faceRegistered, setFaceRegistered] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const checkFaceStatus = async () => {
+      try {
+        const response = await api.get('/face/status');
+        setFaceRegistered(response.data.isRegistered);
+      } catch (err) {
+        setFaceRegistered(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkFaceStatus();
+  }, [user]);
 
   if (!user) {
     return (
@@ -61,6 +82,34 @@ function Home() {
             <span className="role-badge">{user.role.replace('_', ' ')}</span>
           </div>
         </div>
+
+        {(user.role === 'employee' || user.role === 'intern') && !loading && (
+          <div className="welcome-card" style={{ marginTop: '20px', flexDirection: 'column', alignItems: 'flex-start' }}>
+            <h3 style={{ fontFamily: 'var(--font-display)', margin: '0 0 12px 0' }}>Attendance</h3>
+
+            {faceRegistered === false && (
+              <>
+                <p style={{ color: 'var(--ink-soft)', fontSize: '14px', marginBottom: '14px' }}>
+                  You haven't registered your face yet. This is required before you can mark attendance.
+                </p>
+                <Link to="/face-register" className="btn-primary" style={{ display: 'inline-block', textDecoration: 'none', maxWidth: '220px' }}>
+                  Register My Face
+                </Link>
+              </>
+            )}
+
+            {faceRegistered === true && (
+              <>
+                <p style={{ color: 'var(--ink-soft)', fontSize: '14px', marginBottom: '14px' }}>
+                  Your face is registered. You can now mark your attendance.
+                </p>
+                <Link to="/check-in" className="btn-primary" style={{ display: 'inline-block', textDecoration: 'none', maxWidth: '220px' }}>
+                  Mark Attendance
+                </Link>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
