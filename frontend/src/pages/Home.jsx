@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import { Fingerprint, CalendarCheck, LogOut as LogOutIcon, ShieldCheck } from 'lucide-react';
 
 function Home() {
   const { user, logout } = useAuth();
@@ -70,7 +71,9 @@ function Home() {
     <div className="dash-shell">
       <div className="dash-topbar">
         <div className="dash-wordmark">TeamZen</div>
-        <button className="btn-logout" onClick={logout}>Logout</button>
+        <button className="btn-logout btn-with-icon" onClick={logout}>
+          <LogOutIcon size={15} /> Logout
+        </button>
       </div>
 
       <div className="dash-content">
@@ -84,27 +87,42 @@ function Home() {
         </div>
 
         {(user.role === 'employee' || user.role === 'intern') && !loading && (
-          <div className="welcome-card" style={{ marginTop: '20px', flexDirection: 'column', alignItems: 'flex-start' }}>
-            <h3 style={{ fontFamily: 'var(--font-display)', margin: '0 0 12px 0' }}>Attendance</h3>
+          <div className="action-card">
+            <div className="action-card-header">
+              <div className={`icon-circle ${faceRegistered ? 'teal' : 'amber'}`}>
+                {faceRegistered ? <CalendarCheck size={20} /> : <Fingerprint size={20} />}
+              </div>
+              <div>
+                <h3 className="action-card-title">Attendance</h3>
+                {faceRegistered !== null && (
+                  <span className={`status-pill ${faceRegistered ? 'done' : 'pending'}`}>
+                    <ShieldCheck size={13} />
+                    {faceRegistered ? 'Face verified' : 'Setup required'}
+                  </span>
+                )}
+              </div>
+            </div>
 
             {faceRegistered === false && (
               <>
-                <p style={{ color: 'var(--ink-soft)', fontSize: '14px', marginBottom: '14px' }}>
-                  You haven't registered your face yet. This is required before you can mark attendance.
+                <p className="action-card-desc">
+                  You haven't registered your face yet. This one-time setup is required
+                  before you can mark attendance securely.
                 </p>
-                <Link to="/face-register" className="btn-primary" style={{ display: 'inline-block', textDecoration: 'none', maxWidth: '220px' }}>
-                  Register My Face
+                <Link to="/face-register" className="btn-primary btn-with-icon" style={{ display: 'inline-flex', textDecoration: 'none', maxWidth: '220px' }}>
+                  <Fingerprint size={16} /> Register My Face
                 </Link>
               </>
             )}
 
             {faceRegistered === true && (
               <>
-                <p style={{ color: 'var(--ink-soft)', fontSize: '14px', marginBottom: '14px' }}>
-                  Your face is registered. You can now mark your attendance.
+                <p className="action-card-desc">
+                  Your face is registered. You're all set to check in — we'll verify your
+                  face, location, and office network automatically.
                 </p>
-                <Link to="/check-in" className="btn-primary" style={{ display: 'inline-block', textDecoration: 'none', maxWidth: '220px' }}>
-                  Mark Attendance
+                <Link to="/check-in" className="btn-primary btn-with-icon" style={{ display: 'inline-flex', textDecoration: 'none', maxWidth: '220px' }}>
+                  <CalendarCheck size={16} /> Mark Attendance
                 </Link>
               </>
             )}
