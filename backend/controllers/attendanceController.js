@@ -3,8 +3,8 @@ const db = require('../config/db');
 const { isWithinOfficeRadius } = require('../utils/locationUtils');
 const { getPakistanTimeNow, getDayOfWeek, getDateString, calculateLateStatus } = require('../utils/timeUtils');
 const { getClientIp } = require('../utils/networkUtils');
+const { isFaceMatch } = require('../utils/faceUtils');
 
-// Utility endpoint: lets a user see their own current IP (for Admin to configure office_settings.allowed_ip)
 const getMyIp = (req, res) => {
   const ip = getClientIp(req);
   res.json({ status: 'ok', yourIp: ip });
@@ -12,7 +12,7 @@ const getMyIp = (req, res) => {
 
 const checkIn = async (req, res) => {
   try {
-    const { latitude, longitude } = req.body;
+    const { latitude, longitude, faceDescriptor } = req.body;
     const userId = req.user.userId;
     const organizationId = req.user.organizationId;
     const clientIp = getClientIp(req);
@@ -21,33 +21,54 @@ const checkIn = async (req, res) => {
       return res.status(400).json({ status: 'error', message: 'GPS latitude and longitude are required. Please enable location access.' });
     }
 
-    // Step 1: Find the employee profile for this logged-in user
+    if (!faceDescriptor || !Array.isArray(faceDescriptor) || faceDescriptor.length !== 128) {
+      return res.status(400).json({ status: 'error', message: 'A valid face scan is required to check in.' });
+    }
+
+    // Step 1: Find the employee profile
     const [employees] = await db.query('SELECT id FROM employees WHERE user_id = ?', [userId]);
     if (employees.length === 0) {
       return res.status(404).json({ status: 'error', message: 'No employee profile found for your account. Contact your Admin.' });
     }
     const employeeId = employees[0].id;
 
-    // Step 2: Get office settings for GPS radius, allowed IP, and late thresholds
+    // Step 2: CHECK — Face verification (must have a registered face first)
+    const [faceRows] = await db.query('SELECT face_descriptor FROM face_registrations WHERE employee_id = ?', [employeeId]);
+    if (faceRows.length === 0) {
+      return res.status(400).json({ status: 'error', message: 'No face registered yet. Please register your face first.', check: 'face' });
+    }
+
+    const registeredDescriptor = JSON.parse(faceRows[0].face_descriptor);
+    const { isMatch, distance } = isFaceMatch(faceDescriptor, registeredDescriptor);
+
+    if (!isMatch) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Face verification failed. The scanned face does not match your registered face.',
+        check: 'face',
+        distance
+      });
+    }
+
+    // Step 3: Get office settings
     const [settingsRows] = await db.query('SELECT * FROM office_settings WHERE organization_id = ?', [organizationId]);
     if (settingsRows.length === 0) {
       return res.status(400).json({ status: 'error', message: 'Office location has not been configured yet. Contact your Admin.' });
     }
     const settings = settingsRows[0];
 
-    // Step 3: CHECK 1 — Network verification (IP-based, honest substitute for Wi-Fi SSID)
-    // Only enforced if the Admin has actually configured an allowed_ip.
+    // Step 4: CHECK — Network verification
     if (settings.allowed_ip) {
       if (clientIp !== settings.allowed_ip) {
         return res.status(403).json({
           status: 'error',
-          message: `Network verification failed. You must be connected to the office network to check in.`,
+          message: 'Network verification failed. You must be connected to the office network to check in.',
           check: 'network'
         });
       }
     }
 
-    // Step 4: CHECK 2 — GPS verification
+    // Step 5: CHECK — GPS verification
     const { isWithinRadius, distanceMeters } = isWithinOfficeRadius(
       parseFloat(settings.office_latitude),
       parseFloat(settings.office_longitude),
@@ -65,12 +86,12 @@ const checkIn = async (req, res) => {
       });
     }
 
-    // Step 5: CHECK 3 — server-side Pakistan time
+    // Step 6: CHECK — server-side Pakistan time
     const nowPKT = getPakistanTimeNow();
     const attendanceDate = getDateString(nowPKT);
     const dayOfWeek = getDayOfWeek(nowPKT);
 
-    // Step 6: Prevent duplicate check-in for the same day
+    // Step 7: Prevent duplicate check-in
     const [existing] = await db.query(
       'SELECT id, check_in_time FROM attendance WHERE employee_id = ? AND attendance_date = ?',
       [employeeId, attendanceDate]
@@ -79,7 +100,7 @@ const checkIn = async (req, res) => {
       return res.status(409).json({ status: 'error', message: 'You have already checked in today.' });
     }
 
-    // Step 7: Calculate late status based on office standard start time
+    // Step 8: Calculate late status
     const { lateMinutes, lateStatus } = calculateLateStatus(
       nowPKT,
       settings.standard_start_time,
@@ -90,7 +111,7 @@ const checkIn = async (req, res) => {
       }
     );
 
-    // Step 8: Save the attendance record (now including IP address for the audit log)
+    // Step 9: Save attendance
     if (existing.length > 0) {
       await db.query(
         `UPDATE attendance SET
@@ -110,10 +131,11 @@ const checkIn = async (req, res) => {
 
     res.status(201).json({
       status: 'ok',
-      message: 'Check-in successful!',
+      message: 'Check-in successful! All verifications passed.',
       data: {
         checkInTime: nowPKT,
         distanceMeters,
+        faceMatchDistance: distance,
         lateStatus,
         lateMinutes
       }
