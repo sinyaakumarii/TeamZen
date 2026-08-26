@@ -9,6 +9,7 @@ const employeeRoutes = require('./routes/employeeRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
 const faceRoutes = require('./routes/faceRoutes');
 const testRoutes = require('./routes/testRoutes');
+const leaveRoutes = require('./routes/leaveRoutes'); // Added leave routes
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use('/api/employees', employeeRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/face', faceRoutes);
 app.use('/api/test', testRoutes);
+app.use('/api/leave', leaveRoutes); // Mounted leave routes
 
 
 app.get('/', (req, res) => {
