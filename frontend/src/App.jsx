@@ -6,7 +6,8 @@ import Login from './pages/Login';
 import FaceRegister from './pages/FaceRegister';
 import CheckIn from './pages/CheckIn';
 import Leave from './pages/Leave';
-import Holidays from './pages/Holidays'; // Imported the new Holidays page
+import Holidays from './pages/Holidays';
+import Tasks from './pages/Tasks'; // Imported the new Tasks page
 
 function App() {
   return (
@@ -18,7 +19,8 @@ function App() {
           <Route path="/face-register" element={<FaceRegister />} />
           <Route path="/check-in" element={<CheckIn />} />
           <Route path="/leave" element={<Leave />} />
-          <Route path="/holidays" element={<Holidays />} /> {/* Added the Holidays route */}
+          <Route path="/holidays" element={<Holidays />} />
+          <Route path="/tasks" element={<Tasks />} /> {/* Added the Tasks route */}
         </Routes>
       </BrowserRouter>
     </AuthProvider>
