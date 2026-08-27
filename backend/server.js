@@ -10,7 +10,8 @@ const attendanceRoutes = require('./routes/attendanceRoutes');
 const faceRoutes = require('./routes/faceRoutes');
 const testRoutes = require('./routes/testRoutes');
 const leaveRoutes = require('./routes/leaveRoutes');
-const holidayRoutes = require('./routes/holidayRoutes'); // Added holiday routes
+const holidayRoutes = require('./routes/holidayRoutes');
+const taskRoutes = require('./routes/taskRoutes'); // Added task routes
 
 const app = express();
 
@@ -25,7 +26,8 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/face', faceRoutes);
 app.use('/api/test', testRoutes);
 app.use('/api/leave', leaveRoutes);
-app.use('/api/holidays', holidayRoutes); // Mounted holiday routes
+app.use('/api/holidays', holidayRoutes);
+app.use('/api/tasks', taskRoutes); // Mounted task routes
 
 app.get('/', (req, res) => {
   res.send('TeamZen backend is running!');
