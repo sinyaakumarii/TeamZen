@@ -23,30 +23,23 @@ exports.assignTask = async (req, res) => {
   }
 };
 
-// --- NEW FUNCTION: UPDATE TASK STATUS ---
 exports.updateTaskStatus = async (req, res) => {
   try {
-    const taskId = req.params.id; // Get the task ID from the URL
-    const { status } = req.body; // 'pending', 'in_progress', or 'completed'
-    const userId = req.user.userId; // The logged-in user's ID
+    const taskId = req.params.id;
+    const { status } = req.body;
+    const userId = req.user.userId;
 
-    // 1. Find the employee ID for this user
-    const [employeeRows] = await db.query(
-      'SELECT id FROM employees WHERE user_id = ?',
-      [userId]
-    );
+    const [employeeRows] = await db.query('SELECT id FROM employees WHERE user_id = ?', [userId]);
 
     if (employeeRows.length === 0) {
       return res.status(404).json({ status: 'error', message: 'Employee record not found.' });
     }
     const employeeId = employeeRows[0].id;
 
-    // 2. Make sure the status is valid
     if (!['pending', 'in_progress', 'completed'].includes(status)) {
       return res.status(400).json({ status: 'error', message: "Invalid status." });
     }
 
-    // 3. Update the task ONLY if it belongs to this employee
     let updateQuery;
     if (status === 'completed') {
       updateQuery = 'UPDATE tasks SET status = ?, completed_at = CURRENT_TIMESTAMP WHERE id = ? AND employee_id = ?';
@@ -57,19 +50,42 @@ exports.updateTaskStatus = async (req, res) => {
     const [result] = await db.query(updateQuery, [status, taskId, employeeId]);
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ 
-        status: 'error', 
-        message: 'Task not found or you do not have permission to update this task.' 
-      });
+      return res.status(404).json({ status: 'error', message: 'Task not found or permission denied.' });
     }
 
-    res.json({
-      status: 'success',
-      message: `Task status successfully updated to ${status}.`
-    });
+    res.json({ status: 'success', message: `Task status successfully updated to ${status}.` });
 
   } catch (error) {
     console.error('Error updating task:', error);
     res.status(500).json({ status: 'error', message: 'Server error while updating task', error: error.message });
+  }
+};
+
+// --- NEW FUNCTION: GET MY TASKS ---
+exports.getMyTasks = async (req, res) => {
+  try {
+    const userId = req.user.userId; // The logged-in user
+
+    // 1. Find their employee ID
+    const [employeeRows] = await db.query('SELECT id FROM employees WHERE user_id = ?', [userId]);
+    
+    if (employeeRows.length === 0) {
+      return res.status(404).json({ status: 'error', message: 'Employee record not found.' });
+    }
+    const employeeId = employeeRows[0].id;
+
+    // 2. Get all tasks for this employee, sorted by due date
+    const [tasks] = await db.query(
+      'SELECT * FROM tasks WHERE employee_id = ? ORDER BY due_date ASC', 
+      [employeeId]
+    );
+
+    res.json({
+      status: 'success',
+      data: tasks
+    });
+  } catch (error) {
+    console.error('Error fetching tasks:', error);
+    res.status(500).json({ status: 'error', message: 'Server error while fetching tasks', error: error.message });
   }
 };
