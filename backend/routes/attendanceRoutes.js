@@ -1,11 +1,14 @@
-// routes/attendanceRoutes.js
+// backend/routes/attendanceRoutes.js
 const express = require('express');
 const router = express.Router();
-const { checkIn, checkOut, getMyIp } = require('../controllers/attendanceController');
-const { verifyToken } = require('../middleware/authMiddleware');
+const { checkIn, getAllAttendance } = require('../controllers/attendanceController');
+const { verifyToken, checkRole } = require('../middleware/authMiddleware');
 
-router.post('/check-in', verifyToken, checkIn);
-router.post('/check-out', verifyToken, checkOut);
-router.get('/my-ip', verifyToken, getMyIp);
+// Route: GET /api/attendance/all
+router.get('/all', verifyToken, checkRole(['admin', 'super_admin']), getAllAttendance);
 
+// Route: POST /api/attendance/check-in
+router.post('/check-in', verifyToken, checkRole(['employee', 'intern']), checkIn);
+
+// YEH LINE MISSING HONE SE SERVER CRASH HOTA HAI 👇
 module.exports = router;

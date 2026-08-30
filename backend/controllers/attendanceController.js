@@ -198,3 +198,26 @@ const checkOut = async (req, res) => {
   }
 };
 module.exports = { checkIn, getMyIp, checkOut };
+
+
+// --- NEW FUNCTION: GET ALL ATTENDANCE FOR ADMIN ---
+exports.getAllAttendance = async (req, res) => {
+  try {
+    // JOIN lagaya hai taake Admin ko pata chale ke kis email ne check-in kiya tha
+    const [records] = await db.query(
+      `SELECT a.*, u.email as employee_email 
+       FROM attendance a
+       JOIN employees e ON a.employee_id = e.id
+       JOIN users u ON e.user_id = u.id
+       ORDER BY a.check_in_time DESC`
+    );
+
+    res.json({
+      status: 'success',
+      data: records
+    });
+  } catch (error) {
+    console.error('Error fetching attendance records:', error);
+    res.status(500).json({ status: 'error', message: 'Server error while fetching attendance', error: error.message });
+  }
+};
