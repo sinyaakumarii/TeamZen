@@ -1,133 +1,73 @@
-// pages/Home.jsx
-import { useEffect, useState } from 'react';
+// frontend/src/pages/Home.jsx
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
-import { Fingerprint, CalendarCheck, LogOut as LogOutIcon, ShieldCheck } from 'lucide-react';
 
 function Home() {
-  const { user, logout } = useAuth();
-  const [faceRegistered, setFaceRegistered] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const [pendingTasks, setPendingTasks] = useState(0);
 
   useEffect(() => {
-    if (!user) return;
-
-    const checkFaceStatus = async () => {
-      try {
-        const response = await api.get('/face/status');
-        setFaceRegistered(response.data.isRegistered);
-      } catch (err) {
-        setFaceRegistered(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkFaceStatus();
+    // Agar user employee ya intern hai, toh backend se uske tasks mangwao taake count dikha sakein
+    if (user?.role === 'employee' || user?.role === 'intern') {
+      api.get('/tasks/my-tasks')
+        .then(response => {
+          const tasks = response.data.data;
+          // Sirf wo tasks count karo jo 'completed' nahi hain
+          const incomplete = tasks.filter(task => task.status !== 'completed');
+          setPendingTasks(incomplete.length);
+        })
+        .catch(err => console.error("Failed to load tasks for dashboard", err));
+    }
   }, [user]);
-
-  if (!user) {
-    return (
-      <div className="auth-shell">
-        <div className="auth-brand-panel">
-          <svg className="zen-rings" viewBox="0 0 420 420">
-            <circle className="ring-2" cx="210" cy="210" r="90" />
-            <circle className="ring-3" cx="210" cy="210" r="140" />
-            <circle className="ring-4" cx="210" cy="210" r="190" />
-          </svg>
-          <div style={{ zIndex: 1 }}>
-            <div className="auth-eyebrow">Smart HR, Made Calm</div>
-            <h1 className="auth-headline">Welcome to<br />TeamZen.</h1>
-            <p className="auth-subline">
-              AI-powered attendance, performance and payroll — built for clarity.
-            </p>
-          </div>
-          <div className="auth-footnote">© 2026 TeamZen HRMS</div>
-        </div>
-
-        <div className="auth-form-panel">
-          <div className="auth-form-box" style={{ textAlign: 'center' }}>
-            <p className="form-wordmark">TeamZen</p>
-            <h2 className="form-title">You're not signed in</h2>
-            <p className="form-subtitle">Sign in to view your dashboard.</p>
-            <Link to="/login" className="btn-primary" style={{ display: 'inline-block', textDecoration: 'none' }}>
-              Go to Login
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const initials = user.full_name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
 
   return (
     <div className="dash-shell">
       <div className="dash-topbar">
-        <div className="dash-wordmark">TeamZen</div>
-        <button className="btn-logout btn-with-icon" onClick={logout}>
-          <LogOutIcon size={15} /> Logout
-        </button>
+        <h2>Dashboard</h2>
       </div>
-
+      
       <div className="dash-content">
-        <div className="welcome-card">
-          <div className="avatar-circle">{initials}</div>
-          <div>
-            <h2 className="welcome-name">Welcome, {user.full_name}</h2>
-            <p className="welcome-email">{user.email}</p>
-            <span className="role-badge">{user.role.replace('_', ' ')}</span>
-          </div>
+        <div className="action-card" style={{ marginBottom: '20px' }}>
+          <h3>Welcome back, {user?.role.toUpperCase()}! 👋</h3>
+          <p>Here is what is happening in your workspace today.</p>
         </div>
 
-        {(user.role === 'employee' || user.role === 'intern') && !loading && (
-          <div className="action-card">
-            <div className="action-card-header">
-              <div className={`icon-circle ${faceRegistered ? 'teal' : 'amber'}`}>
-                {faceRegistered ? <CalendarCheck size={20} /> : <Fingerprint size={20} />}
-              </div>
-              <div>
-                <h3 className="action-card-title">Attendance</h3>
-                {faceRegistered !== null && (
-                  <span className={`status-pill ${faceRegistered ? 'done' : 'pending'}`}>
-                    <ShieldCheck size={13} />
-                    {faceRegistered ? 'Face verified' : 'Setup required'}
-                  </span>
-                )}
-              </div>
+        {/* SUMMARY CARDS SECTION */}
+        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+          
+          {/* Card 1: Tasks Summary (Only for Employees) */}
+          {(user?.role === 'employee' || user?.role === 'intern') && (
+            <div className="action-card" style={{ flex: 1, minWidth: '200px', borderLeft: '4px solid #3498db' }}>
+              <h4>My Tasks</h4>
+              <h1 style={{ fontSize: '3rem', margin: '10px 0', color: '#2c3e50' }}>{pendingTasks}</h1>
+              <p style={{ color: '#7f8c8d' }}>Tasks needing your attention</p>
+              <Link to="/tasks" className="btn-primary" style={{ display: 'inline-block', marginTop: '10px', textDecoration: 'none' }}>
+                View Tasks
+              </Link>
             </div>
+          )}
 
-            {faceRegistered === false && (
-              <>
-                <p className="action-card-desc">
-                  You haven't registered your face yet. This one-time setup is required
-                  before you can mark attendance securely.
-                </p>
-                <Link to="/face-register" className="btn-primary btn-with-icon" style={{ display: 'inline-flex', textDecoration: 'none', maxWidth: '220px' }}>
-                  <Fingerprint size={16} /> Register My Face
-                </Link>
-              </>
-            )}
-
-            {faceRegistered === true && (
-              <>
-                <p className="action-card-desc">
-                  Your face is registered. You're all set to check in — we'll verify your
-                  face, location, and office network automatically.
-                </p>
-                <Link to="/check-in" className="btn-primary btn-with-icon" style={{ display: 'inline-flex', textDecoration: 'none', maxWidth: '220px' }}>
-                  <CalendarCheck size={16} /> Mark Attendance
-                </Link>
-              </>
-            )}
+          {/* Card 2: Quick Action (Check-in) */}
+          <div className="action-card" style={{ flex: 1, minWidth: '200px', borderLeft: '4px solid #2ecc71' }}>
+            <h4>Daily Attendance</h4>
+            <p style={{ marginTop: '10px', color: '#7f8c8d' }}>Don't forget to mark your attendance using facial recognition.</p>
+            <Link to="/check-in" className="btn-primary" style={{ display: 'inline-block', marginTop: '15px', textDecoration: 'none' }}>
+              Check In Now
+            </Link>
           </div>
-        )}
+
+          {/* Card 3: Quick Action (Leave) */}
+          <div className="action-card" style={{ flex: 1, minWidth: '200px', borderLeft: '4px solid #e74c3c' }}>
+            <h4>Leave Management</h4>
+            <p style={{ marginTop: '10px', color: '#7f8c8d' }}>Planning a vacation or feeling sick? Submit a request.</p>
+            <Link to="/leave" className="btn-primary" style={{ display: 'inline-block', marginTop: '15px', textDecoration: 'none' }}>
+              Apply for Leave
+            </Link>
+          </div>
+
+        </div>
       </div>
     </div>
   );
