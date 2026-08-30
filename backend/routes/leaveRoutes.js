@@ -1,8 +1,12 @@
 // backend/routes/leaveRoutes.js
 const express = require('express');
 const router = express.Router();
-const { applyLeave, reviewLeave } = require('../controllers/leaveController');
+const { applyLeave, reviewLeave, getAllLeaves } = require('../controllers/leaveController');
 const { verifyToken, checkRole } = require('../middleware/authMiddleware');
+
+// Route: GET /api/leave/all
+// Only admins can see all leave requests
+router.get('/all', verifyToken, checkRole(['admin', 'super_admin']), getAllLeaves);
 
 // Route: POST /api/leave/apply
 // Only roles 'employee' and 'intern' are allowed to hit this endpoint

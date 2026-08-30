@@ -34,12 +34,11 @@ exports.applyLeave = async (req, res) => {
   }
 };
 
-// --- NEW FUNCTION: REVIEW LEAVE ---
 exports.reviewLeave = async (req, res) => {
   try {
-    const leaveId = req.params.id; // The ID of the leave request from the URL
-    const { status, admin_notes } = req.body; // 'approved' or 'rejected'
-    const adminUserId = req.user.userId; // The Admin's ID from their JWT token
+    const leaveId = req.params.id; 
+    const { status, admin_notes } = req.body; 
+    const adminUserId = req.user.userId; 
 
     if (!['approved', 'rejected'].includes(status)) {
       return res.status(400).json({ status: 'error', message: "Status must be either 'approved' or 'rejected'" });
@@ -63,5 +62,27 @@ exports.reviewLeave = async (req, res) => {
   } catch (error) {
     console.error('Error reviewing leave:', error);
     res.status(500).json({ status: 'error', message: 'Server error while reviewing leave', error: error.message });
+  }
+};
+
+// --- NEW FUNCTION: GET ALL LEAVES FOR ADMIN ---
+exports.getAllLeaves = async (req, res) => {
+  try {
+    // JOIN lagaya hai taake admin ko user ka email bhi nazar aaye jisne leave apply ki hai
+    const [leaves] = await db.query(
+      `SELECT lr.*, u.email as employee_email 
+       FROM leave_requests lr
+       JOIN employees e ON lr.employee_id = e.id
+       JOIN users u ON e.user_id = u.id
+       ORDER BY lr.created_at DESC`
+    );
+
+    res.json({
+      status: 'success',
+      data: leaves
+    });
+  } catch (error) {
+    console.error('Error fetching all leaves:', error);
+    res.status(500).json({ status: 'error', message: 'Server error while fetching leaves', error: error.message });
   }
 };
