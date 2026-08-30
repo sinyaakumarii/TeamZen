@@ -74,3 +74,32 @@ exports.generateRecommendation = async (req, res) => {
     res.status(500).json({ status: 'error', message: 'Server error', error: error.message });
   }
 };
+
+exports.reviewRecommendation = async (req, res) => {
+  try {
+    const { recommendation_id } = req.params;
+    const { status } = req.body;
+
+    if (!['approved', 'rejected'].includes(status)) {
+      return res.status(400).json({ status: 'error', message: "Status must be either 'approved' or 'rejected'." });
+    }
+
+    const [result] = await db.query(
+      `UPDATE ai_recommendations SET status = ? WHERE id = ?`,
+      [status, recommendation_id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ status: 'error', message: 'Recommendation not found.' });
+    }
+
+    res.json({
+      status: 'success',
+      message: `AI recommendation successfully ${status}.`
+    });
+
+  } catch (error) {
+    console.error('Error reviewing recommendation:', error);
+    res.status(500).json({ status: 'error', message: 'Server error', error: error.message });
+  }
+};
