@@ -1,4 +1,4 @@
-=// backend/controllers/performanceController.js
+// backend/controllers/performanceController.js
 const db = require('../config/db');
 
 exports.submitReview = async (req, res) => {
@@ -28,12 +28,10 @@ exports.submitReview = async (req, res) => {
   }
 };
 
-// --- NEW FUNCTION: GENERATE AI RECOMMENDATION ---
 exports.generateRecommendation = async (req, res) => {
   try {
     const { review_id } = req.body;
 
-    // 1. Fetch the existing performance review
     const [reviewRows] = await db.query('SELECT * FROM performance_reviews WHERE id = ?', [review_id]);
     
     if (reviewRows.length === 0) {
@@ -45,7 +43,6 @@ exports.generateRecommendation = async (req, res) => {
     let action = 'none';
     let reasoning = '';
 
-    // 2. AI Logic (Rules-based for now)
     if (score >= 90) {
       action = 'bonus';
       reasoning = `Excellent performance with a score of ${score}/100. High productivity and great attendance. Recommended for a performance bonus.`;
@@ -60,7 +57,6 @@ exports.generateRecommendation = async (req, res) => {
       reasoning = `Average performance (${score}/100). No financial action recommended at this time.`;
     }
 
-    // 3. Save to database as "pending"
     const [result] = await db.query(
       `INSERT INTO ai_recommendations (employee_id, review_id, suggested_action, reasoning, status)
        VALUES (?, ?, ?, ?, 'pending')`,
