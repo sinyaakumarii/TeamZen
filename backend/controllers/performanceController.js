@@ -1,4 +1,3 @@
-// backend/controllers/performanceController.js
 const db = require('../config/db');
 
 exports.submitReview = async (req, res) => {
@@ -31,7 +30,6 @@ exports.submitReview = async (req, res) => {
 exports.generateRecommendation = async (req, res) => {
   try {
     const { review_id } = req.body;
-
     const [reviewRows] = await db.query('SELECT * FROM performance_reviews WHERE id = ?', [review_id]);
     
     if (reviewRows.length === 0) {
@@ -100,6 +98,58 @@ exports.reviewRecommendation = async (req, res) => {
 
   } catch (error) {
     console.error('Error reviewing recommendation:', error);
+    res.status(500).json({ status: 'error', message: 'Server error', error: error.message });
+  }
+};
+
+// --- YEH FUNCTION ZAROORI THA DATA FETCH KARNE KE LIYE ---
+exports.getAllRecommendations = async (req, res) => {
+  try {
+    const [recommendations] = await db.query(
+      `SELECT ar.*, u.email as employee_email 
+       FROM ai_recommendations ar
+       JOIN employees e ON ar.employee_id = e.id
+       JOIN users u ON e.user_id = u.id
+       ORDER BY ar.created_at DESC`
+    );
+
+    res.json({
+      status: 'success',
+      data: recommendations
+    });
+  } catch (error) {
+    console.error('Error fetching AI recommendations:', error);
+    res.status(500).json({ status: 'error', message: 'Server error while fetching recommendations', error: error.message });
+  }
+};
+// --- NEW FUNCTION: GET MY PERFORMANCE (FOR EMPLOYEE) ---
+exports.getMyPerformance = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    
+    // 1. Find employee ID from user ID
+    const [employeeRows] = await db.query('SELECT id FROM employees WHERE user_id = ?', [userId]);
+    if (employeeRows.length === 0) {
+      return res.status(404).json({ status: 'error', message: 'Employee record not found.' });
+    }
+    const employeeId = employeeRows[0].id;
+
+    // 2. Fetch reviews and their approved recommendations
+    const [reviews] = await db.query(
+      `SELECT pr.*, ar.suggested_action, ar.status as rec_status
+       FROM performance_reviews pr
+       LEFT JOIN ai_recommendations ar ON pr.id = ar.review_id
+       WHERE pr.employee_id = ?
+       ORDER BY pr.created_at DESC`,
+      [employeeId]
+    );
+
+    res.json({
+      status: 'success',
+      data: reviews
+    });
+  } catch (error) {
+    console.error('Error fetching my performance:', error);
     res.status(500).json({ status: 'error', message: 'Server error', error: error.message });
   }
 };

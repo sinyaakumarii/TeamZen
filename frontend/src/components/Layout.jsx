@@ -1,14 +1,13 @@
-// frontend/src/components/Layout.jsx
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 function Layout() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem('token'); // Clear the token
-    window.location.href = '/login'; // Force reload to clear states
+    localStorage.removeItem('token'); 
+    window.location.href = '/login'; 
   };
 
   return (
@@ -29,6 +28,20 @@ function Layout() {
         <Link to="/leave" style={{ color: 'white', textDecoration: 'none', padding: '10px', background: '#34495e', borderRadius: '5px' }}>Leave</Link>
         <Link to="/holidays" style={{ color: 'white', textDecoration: 'none', padding: '10px', background: '#34495e', borderRadius: '5px' }}>Holidays</Link>
 
+        {/* NAYA LINK: Sirf Admin aur Super Admin ko dikhega */}
+        {(user?.role === 'admin' || user?.role === 'super_admin') && (
+          <Link to="/ai-recommendations" style={{ color: 'white', textDecoration: 'none', padding: '10px', background: '#2980b9', borderRadius: '5px', fontWeight: 'bold' }}>
+            AI Recommendations
+          </Link>
+        )}
+
+        {/* NAYA LINK: Sirf Employee aur Intern ko dikhega */}
+        {(user?.role === 'employee' || user?.role === 'intern') && (
+          <Link to="/my-performance" style={{ color: 'white', textDecoration: 'none', padding: '10px', background: '#8e44ad', borderRadius: '5px', fontWeight: 'bold' }}>
+            My Performance
+          </Link>
+        )}
+
         {/* User Info & Logout at the bottom */}
         <div style={{ marginTop: 'auto', borderTop: '1px solid #34495e', paddingTop: '15px' }}>
           <p style={{ fontSize: '14px', color: '#bdc3c7', marginBottom: '10px' }}>
@@ -44,7 +57,6 @@ function Layout() {
 
       {/* MAIN CONTENT AREA */}
       <div style={{ flex: 1, overflowY: 'auto', background: '#f4f7f6', padding: '20px' }}>
-        {/* The <Outlet /> is where React Router dynamically injects your other pages */}
         <Outlet /> 
       </div>
 

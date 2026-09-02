@@ -1,9 +1,9 @@
-// frontend/src/App.jsx
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
-import ProtectedRoute from './components/ProtectedRoute'; // Imported the Guard
-
+import ProtectedRoute from './components/ProtectedRoute'; 
+import AIRecommendations from './pages/AIRecommendations';
+import MyPerformance from './pages/MyPerformance';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import FaceRegister from './pages/FaceRegister';
@@ -17,11 +17,11 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public Routes (Anyone can visit these) */}
+          {/* Public Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/face-register" element={<FaceRegister />} />
 
-          {/* Protected Routes (Must be logged in to pass the guard) */}
+          {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>
               <Route path="/" element={<Home />} />
@@ -29,6 +29,8 @@ function App() {
               <Route path="/leave" element={<Leave />} />
               <Route path="/holidays" element={<Holidays />} />
               <Route path="/tasks" element={<Tasks />} />
+              <Route path="/ai-recommendations" element={<AIRecommendations />} />
+              <Route path="/my-performance" element={<MyPerformance />} />
             </Route>
           </Route>
           
