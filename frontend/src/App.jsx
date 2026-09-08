@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AIRecommendations from './pages/AIRecommendations';
 import MyPerformance from './pages/MyPerformance';
 import Payroll from './pages/Payroll';
+import Documents from './pages/Documents'; // Naya import
 import Home from './pages/Home';
 import Login from './pages/Login';
 import FaceRegister from './pages/FaceRegister';
@@ -32,6 +33,7 @@ function App() {
               <Route path="/ai-recommendations" element={<AIRecommendations />} />
               <Route path="/my-performance" element={<MyPerformance />} />
               <Route path="/payroll" element={<Payroll />} />
+              <Route path="/documents" element={<Documents />} /> {/* Naya Route */}
             </Route>
           </Route>
         </Routes>

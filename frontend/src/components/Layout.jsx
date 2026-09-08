@@ -28,6 +28,7 @@ function Layout() {
           <>
             <Link to="/ai-recommendations" style={{ color: 'white', textDecoration: 'none', padding: '10px', background: '#2980b9', borderRadius: '5px', fontWeight: 'bold' }}>AI Recommendations</Link>
             <Link to="/payroll" style={{ color: 'white', textDecoration: 'none', padding: '10px', background: '#27ae60', borderRadius: '5px', fontWeight: 'bold' }}>Payroll</Link>
+            <Link to="/documents" style={{ color: 'white', textDecoration: 'none', padding: '10px', background: '#e67e22', borderRadius: '5px', fontWeight: 'bold' }}>Documents</Link>
           </>
         )}
 
