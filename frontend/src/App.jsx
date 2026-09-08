@@ -1,9 +1,11 @@
+// frontend/src/App.jsx
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute'; 
 import AIRecommendations from './pages/AIRecommendations';
 import MyPerformance from './pages/MyPerformance';
+import Payroll from './pages/Payroll';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import FaceRegister from './pages/FaceRegister';
@@ -17,11 +19,9 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/face-register" element={<FaceRegister />} />
 
-          {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>
               <Route path="/" element={<Home />} />
@@ -31,9 +31,9 @@ function App() {
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/ai-recommendations" element={<AIRecommendations />} />
               <Route path="/my-performance" element={<MyPerformance />} />
+              <Route path="/payroll" element={<Payroll />} />
             </Route>
           </Route>
-          
         </Routes>
       </BrowserRouter>
     </AuthProvider>
