@@ -23,6 +23,9 @@ const taskRoutes = require('./routes/taskRoutes');
 const performanceRoutes = require('./routes/performanceRoutes');
 const payrollRoutes = require('./routes/payrollRoutes');      // Naya import
 const documentRoutes = require('./routes/documentRoutes');    // Naya import
+const announcementRoutes = require('./routes/announcementRoutes');
+const correctionRoutes = require('./routes/correctionRoutes');
+app.use('/api/corrections', correctionRoutes);
 
 // Use Routes
 app.use('/api/auth', authRoutes);
@@ -36,7 +39,9 @@ app.use('/api/holidays', holidayRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/performance', performanceRoutes);
 app.use('/api/payroll', payrollRoutes);           // Naya route
-app.use('/api/documents', documentRoutes);        // Naya route
+app.use('/api/documents', documentRoutes);   
+app.use('/api/announcements', announcementRoutes);
+     // Naya route
 
 // Start Server
 app.listen(PORT, () => {

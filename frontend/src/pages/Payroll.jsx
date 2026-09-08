@@ -1,7 +1,7 @@
 // frontend/src/pages/Payroll.jsx
 import { useState, useEffect } from 'react';
 import api from '../services/api';
-import { DollarSign, PlusCircle } from 'lucide-react';
+import { DollarSign, PlusCircle, Download } from 'lucide-react';
 
 function Payroll() {
   const [payrolls, setPayrolls] = useState([]);
@@ -37,9 +37,38 @@ function Payroll() {
     setLoading(false);
   };
 
+  // --- NAYA FUNCTION: EXPORT TO EXCEL (CSV) ---
+  const exportToCSV = () => {
+    if (payrolls.length === 0) {
+      alert("No data to export!");
+      return;
+    }
+    
+    const headers = ['Employee,Month,Basic Salary,Tax,Net Salary'];
+    const rows = payrolls.map(p => 
+      `"${p.first_name} ${p.last_name}","${p.salary_month} ${p.salary_year}",${p.basic_salary},${p.tax},${p.net_salary}`
+    );
+    
+    const csvContent = "data:text/csv;charset=utf-8," + headers.concat(rows).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "TeamZen_Payroll_Report.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="dash-shell">
-      <div className="dash-topbar"><h2>Payroll Management</h2></div>
+      <div className="dash-topbar">
+        <h2>Payroll Management</h2>
+        {/* NAYA BUTTON */}
+        <button onClick={exportToCSV} style={{ display: 'flex', alignItems: 'center', gap: '5px', background: '#27ae60', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
+          <Download size={18} /> Export to Excel
+        </button>
+      </div>
+      
       <div className="dash-content">
         {message && <div className="result-box">{message}</div>}
         
@@ -52,7 +81,7 @@ function Payroll() {
             <input type="number" placeholder="Allowances (Rs)" onChange={e => setFormData({...formData, allowances: e.target.value})} />
             <input type="number" placeholder="Overtime (Rs)" onChange={e => setFormData({...formData, overtime_pay: e.target.value})} />
             <input type="number" placeholder="Deductions (Rs)" onChange={e => setFormData({...formData, deductions: e.target.value})} />
-            <button type="submit" disabled={loading} style={{ background: '#27ae60', color: '#fff', border: 'none', padding: '10px', cursor: 'pointer' }}>Generate</button>
+            <button type="submit" disabled={loading} style={{ background: '#2980b9', color: '#fff', border: 'none', padding: '10px', cursor: 'pointer', borderRadius: '4px' }}>Generate</button>
           </form>
         </div>
 
@@ -62,17 +91,21 @@ function Payroll() {
           <table style={{ width: '100%', textAlign: 'left', marginTop: '10px', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#ecf0f1' }}>
-                <th>Employee</th><th>Month</th><th>Basic</th><th>Tax</th><th>Net Salary</th>
+                <th style={{ padding: '10px' }}>Employee</th>
+                <th style={{ padding: '10px' }}>Month</th>
+                <th style={{ padding: '10px' }}>Basic</th>
+                <th style={{ padding: '10px' }}>Tax</th>
+                <th style={{ padding: '10px' }}>Net Salary</th>
               </tr>
             </thead>
             <tbody>
               {payrolls.map(p => (
                 <tr key={p.id} style={{ borderBottom: '1px solid #eee' }}>
-                  <td>{p.first_name} {p.last_name}</td>
-                  <td>{p.salary_month} {p.salary_year}</td>
-                  <td>Rs {p.basic_salary}</td>
-                  <td style={{ color: 'red' }}>Rs {p.tax}</td>
-                  <td style={{ color: 'green', fontWeight: 'bold' }}>Rs {p.net_salary}</td>
+                  <td style={{ padding: '10px' }}>{p.first_name} {p.last_name}</td>
+                  <td style={{ padding: '10px' }}>{p.salary_month} {p.salary_year}</td>
+                  <td style={{ padding: '10px' }}>Rs {p.basic_salary}</td>
+                  <td style={{ padding: '10px', color: 'red' }}>Rs {p.tax}</td>
+                  <td style={{ padding: '10px', color: 'green', fontWeight: 'bold' }}>Rs {p.net_salary}</td>
                 </tr>
               ))}
             </tbody>

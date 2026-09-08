@@ -17,7 +17,9 @@ function Layout() {
         <h2 style={{ color: '#ecf0f1', margin: '0 0 10px 0' }}>TeamZen</h2>
         <hr style={{ borderColor: '#34495e', width: '100%', marginBottom: '10px' }} />
 
+        {/* COMMON LINKS (Sab roles ke liye) */}
         <Link to="/" style={{ color: 'white', textDecoration: 'none', padding: '10px', background: '#34495e', borderRadius: '5px' }}>Dashboard</Link>
+        <Link to="/announcements" style={{ color: 'white', textDecoration: 'none', padding: '10px', background: '#c0392b', borderRadius: '5px', fontWeight: 'bold' }}>Announcements</Link>
         <Link to="/check-in" style={{ color: 'white', textDecoration: 'none', padding: '10px', background: '#34495e', borderRadius: '5px' }}>Attendance</Link>
         <Link to="/tasks" style={{ color: 'white', textDecoration: 'none', padding: '10px', background: '#34495e', borderRadius: '5px' }}>Tasks</Link>
         <Link to="/leave" style={{ color: 'white', textDecoration: 'none', padding: '10px', background: '#34495e', borderRadius: '5px' }}>Leave</Link>
