@@ -1,4 +1,5 @@
 // server.js
+const payrollRoutes = require('./routes/payrollRoutes');
 const express = require('express');
 const cors = require('cors');
 const db = require('./config/db');
@@ -30,6 +31,7 @@ app.use('/api/leave', leaveRoutes);
 app.use('/api/holidays', holidayRoutes);
 app.use('/api/tasks', taskRoutes); 
 app.use('/api/performance', performanceRoutes); // ✅ Mounted performance routes
+app.use('/api/payroll', payrollRoutes);
 
 app.get('/', (req, res) => {
   res.send('TeamZen backend is running!');
