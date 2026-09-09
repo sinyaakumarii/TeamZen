@@ -8,7 +8,8 @@ import MyPerformance from './pages/MyPerformance';
 import Payroll from './pages/Payroll';
 import Documents from './pages/Documents';
 import Announcements from './pages/Announcements';
-import Employees from './pages/Employees'; // Naya Employee Management import
+import Employees from './pages/Employees';
+import Departments from './pages/Departments'; // Naya import
 import Home from './pages/Home';
 import Login from './pages/Login';
 import FaceRegister from './pages/FaceRegister';
@@ -33,7 +34,8 @@ function App() {
               <Route path="/holidays" element={<Holidays />} />
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/announcements" element={<Announcements />} />
-              <Route path="/employees" element={<Employees />} /> {/* Naya Employee Route */}
+              <Route path="/employees" element={<Employees />} />
+              <Route path="/departments" element={<Departments />} /> {/* Naya Route */}
               <Route path="/ai-recommendations" element={<AIRecommendations />} />
               <Route path="/my-performance" element={<MyPerformance />} />
               <Route path="/payroll" element={<Payroll />} />

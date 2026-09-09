@@ -30,6 +30,10 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 app.use('/api/dashboard', dashboardRoutes);
 const employeeRoutes = require('./routes/employeeRoutes');
 app.use('/api/employees', employeeRoutes);
+const departmentRoutes = require('./routes/departmentRoutes');
+app.use('/api/departments', departmentRoutes);
+const departmentRoutes = require('./routes/departmentRoutes');
+app.use('/api/departments', departmentRoutes);
 
 // Use Routes
 app.use('/api/auth', authRoutes);

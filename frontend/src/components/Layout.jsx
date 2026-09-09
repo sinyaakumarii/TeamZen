@@ -28,6 +28,10 @@ function Layout() {
         {/* ADMIN LINKS */}
         {(user?.role === 'admin' || user?.role === 'super_admin') && (
           <>
+            {/* Yahan maine Employees aur Departments add kiye hain aapki styling ke sath */}
+            <Link to="/employees" style={{ color: 'white', textDecoration: 'none', padding: '10px', background: '#16a085', borderRadius: '5px', fontWeight: 'bold' }}>Employees</Link>
+            <Link to="/departments" style={{ color: 'white', textDecoration: 'none', padding: '10px', background: '#8e44ad', borderRadius: '5px', fontWeight: 'bold' }}>Departments</Link>
+            
             <Link to="/ai-recommendations" style={{ color: 'white', textDecoration: 'none', padding: '10px', background: '#2980b9', borderRadius: '5px', fontWeight: 'bold' }}>AI Recommendations</Link>
             <Link to="/payroll" style={{ color: 'white', textDecoration: 'none', padding: '10px', background: '#27ae60', borderRadius: '5px', fontWeight: 'bold' }}>Payroll</Link>
             <Link to="/documents" style={{ color: 'white', textDecoration: 'none', padding: '10px', background: '#e67e22', borderRadius: '5px', fontWeight: 'bold' }}>Documents</Link>
