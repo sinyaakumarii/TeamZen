@@ -26,6 +26,10 @@ const documentRoutes = require('./routes/documentRoutes');    // Naya import
 const announcementRoutes = require('./routes/announcementRoutes');
 const correctionRoutes = require('./routes/correctionRoutes');
 app.use('/api/corrections', correctionRoutes);
+const dashboardRoutes = require('./routes/dashboardRoutes');
+app.use('/api/dashboard', dashboardRoutes);
+const employeeRoutes = require('./routes/employeeRoutes');
+app.use('/api/employees', employeeRoutes);
 
 // Use Routes
 app.use('/api/auth', authRoutes);

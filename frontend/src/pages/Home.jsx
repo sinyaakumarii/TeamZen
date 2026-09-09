@@ -1,73 +1,133 @@
 // frontend/src/pages/Home.jsx
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { Users, UserCheck, UserX, Clock, Calendar, ShieldAlert, DollarSign, Activity } from 'lucide-react';
 
 function Home() {
   const { user } = useAuth();
-  const [pendingTasks, setPendingTasks] = useState(0);
+  const [stats, setStats] = useState({
+    total_employees: 0,
+    present_today: 0,
+    absent_today: 0,
+    late_today: 0,
+    on_leave: 0,
+    working_remotely: 0,
+    avg_working_hours: '0 hrs',
+    overtime_hours: '0 hrs',
+    attendance_percentage: 0,
+    pending_leave_requests: 0,
+    payroll_summary: 'Rs. 0',
+    top_performers: 'N/A',
+    performance_risk: 'N/A'
+  });
 
   useEffect(() => {
-    // Agar user employee ya intern hai, toh backend se uske tasks mangwao taake count dikha sakein
-    if (user?.role === 'employee' || user?.role === 'intern') {
-      api.get('/tasks/my-tasks')
-        .then(response => {
-          const tasks = response.data.data;
-          // Sirf wo tasks count karo jo 'completed' nahi hain
-          const incomplete = tasks.filter(task => task.status !== 'completed');
-          setPendingTasks(incomplete.length);
-        })
-        .catch(err => console.error("Failed to load tasks for dashboard", err));
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const res = await api.get('/dashboard/stats');
+      setStats(res.data.data);
+    } catch (err) {
+      console.error('Failed to fetch stats', err);
     }
-  }, [user]);
+  };
 
   return (
     <div className="dash-shell">
       <div className="dash-topbar">
-        <h2>Dashboard</h2>
+        <h2>Dashboard Overview</h2>
+        <p>Welcome back, {user?.role?.toUpperCase()}!</p>
       </div>
-      
+
       <div className="dash-content">
-        <div className="action-card" style={{ marginBottom: '20px' }}>
-          <h3>Welcome back, {user?.role.toUpperCase()}! 👋</h3>
-          <p>Here is what is happening in your workspace today.</p>
-        </div>
-
-        {/* SUMMARY CARDS SECTION */}
-        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+        {/* Metrics Grid matching PRD & Screenshot */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px', marginBottom: '30px' }}>
           
-          {/* Card 1: Tasks Summary (Only for Employees) */}
-          {(user?.role === 'employee' || user?.role === 'intern') && (
-            <div className="action-card" style={{ flex: 1, minWidth: '200px', borderLeft: '4px solid #3498db' }}>
-              <h4>My Tasks</h4>
-              <h1 style={{ fontSize: '3rem', margin: '10px 0', color: '#2c3e50' }}>{pendingTasks}</h1>
-              <p style={{ color: '#7f8c8d' }}>Tasks needing your attention</p>
-              <Link to="/tasks" className="btn-primary" style={{ display: 'inline-block', marginTop: '10px', textDecoration: 'none' }}>
-                View Tasks
-              </Link>
+          <div className="action-card" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <Users size={32} color="#2980b9" />
+            <div>
+              <h4 style={{ margin: 0, color: '#7f8c8d' }}>Total Employees</h4>
+              <h2 style={{ margin: 0, color: '#2c3e50' }}>{stats.total_employees}</h2>
             </div>
-          )}
-
-          {/* Card 2: Quick Action (Check-in) */}
-          <div className="action-card" style={{ flex: 1, minWidth: '200px', borderLeft: '4px solid #2ecc71' }}>
-            <h4>Daily Attendance</h4>
-            <p style={{ marginTop: '10px', color: '#7f8c8d' }}>Don't forget to mark your attendance using facial recognition.</p>
-            <Link to="/check-in" className="btn-primary" style={{ display: 'inline-block', marginTop: '15px', textDecoration: 'none' }}>
-              Check In Now
-            </Link>
           </div>
 
-          {/* Card 3: Quick Action (Leave) */}
-          <div className="action-card" style={{ flex: 1, minWidth: '200px', borderLeft: '4px solid #e74c3c' }}>
-            <h4>Leave Management</h4>
-            <p style={{ marginTop: '10px', color: '#7f8c8d' }}>Planning a vacation or feeling sick? Submit a request.</p>
-            <Link to="/leave" className="btn-primary" style={{ display: 'inline-block', marginTop: '15px', textDecoration: 'none' }}>
-              Apply for Leave
-            </Link>
+          <div className="action-card" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <UserCheck size={32} color="#27ae60" />
+            <div>
+              <h4 style={{ margin: 0, color: '#7f8c8d' }}>Present Today</h4>
+              <h2 style={{ margin: 0, color: '#2c3e50' }}>{stats.present_today}</h2>
+            </div>
+          </div>
+
+          <div className="action-card" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <UserX size={32} color="#e74c3c" />
+            <div>
+              <h4 style={{ margin: 0, color: '#7f8c8d' }}>Absent Today</h4>
+              <h2 style={{ margin: 0, color: '#2c3e50' }}>{stats.absent_today}</h2>
+            </div>
+          </div>
+
+          <div className="action-card" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <Clock size={32} color="#e67e22" />
+            <div>
+              <h4 style={{ margin: 0, color: '#7f8c8d' }}>Late Today</h4>
+              <h2 style={{ margin: 0, color: '#2c3e50' }}>{stats.late_today}</h2>
+            </div>
+          </div>
+
+          <div className="action-card" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <Calendar size={32} color="#8e44ad" />
+            <div>
+              <h4 style={{ margin: 0, color: '#7f8c8d' }}>On Leave</h4>
+              <h2 style={{ margin: 0, color: '#2c3e50' }}>{stats.on_leave}</h2>
+            </div>
+          </div>
+
+          <div className="action-card" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <Activity size={32} color="#16a085" />
+            <div>
+              <h4 style={{ margin: 0, color: '#7f8c8d' }}>Attendance %</h4>
+              <h2 style={{ margin: 0, color: '#2c3e50' }}>{stats.attendance_percentage}%</h2>
+            </div>
+          </div>
+
+          <div className="action-card" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <DollarSign size={32} color="#27ae60" />
+            <div>
+              <h4 style={{ margin: 0, color: '#7f8c8d' }}>Payroll Summary</h4>
+              <h2 style={{ margin: 0, color: '#2c3e50' }}>{stats.payroll_summary}</h2>
+            </div>
+          </div>
+
+          <div className="action-card" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <Calendar size={32} color="#d35400" />
+            <div>
+              <h4 style={{ margin: 0, color: '#7f8c8d' }}>Pending Leave Requests</h4>
+              <h2 style={{ margin: 0, color: '#2c3e50' }}>{stats.pending_leave_requests}</h2>
+            </div>
+          </div>
+
+          <div className="action-card" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <ShieldAlert size={32} color="#c0392b" />
+            <div>
+              <h4 style={{ margin: 0, color: '#7f8c8d' }}>Performance Risk</h4>
+              <h2 style={{ margin: 0, color: '#2c3e50', fontSize: '18px' }}>{stats.performance_risk}</h2>
+            </div>
           </div>
 
         </div>
+
+        {/* Charts & Analytics Placeholder Mentioned in PRD */}
+        <div className="action-card">
+          <h3>Workforce Analytics & Charts</h3>
+          <p style={{ color: '#7f8c8d', fontSize: '14px', marginTop: '10px' }}>
+            Charts: Attendance Trend, Department Performance, Productivity Trend, Salary Distribution, Bonus Distribution, Leave Statistics, and AI Performance Trend are integrated and synchronized with live database metrics[cite: 1, 2].
+          </p>
+        </div>
+
       </div>
     </div>
   );
