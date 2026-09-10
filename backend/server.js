@@ -12,7 +12,6 @@ app.use(express.json());
 
 // Import Routes
 const authRoutes = require('./routes/authRoutes');
-const employeeRoutes = require('./routes/employeeRoutes');
 const organizationRoutes = require('./routes/organizationRoutes');
 const officeSettingsRoutes = require('./routes/officeSettingsRoutes');
 const faceRoutes = require('./routes/faceRoutes');
@@ -32,8 +31,7 @@ const employeeRoutes = require('./routes/employeeRoutes');
 app.use('/api/employees', employeeRoutes);
 const departmentRoutes = require('./routes/departmentRoutes');
 app.use('/api/departments', departmentRoutes);
-const departmentRoutes = require('./routes/departmentRoutes');
-app.use('/api/departments', departmentRoutes);
+
 
 // Use Routes
 app.use('/api/auth', authRoutes);
